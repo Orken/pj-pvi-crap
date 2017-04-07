@@ -38,7 +38,7 @@ for ($i=1; $i<672 ; $i++) {
 if($dossier = opendir('/var/www/mespj/url')) {
 	while(false !== ($fichier = readdir($dossier))) {
 		if ($fichier{0}!='.') {
-			extractData('/var/www/pj/url/'.$fichier);
+			extractData('/var/www/mespj/url/'.$fichier);
 		}
 	}	
 	closedir($dossier);

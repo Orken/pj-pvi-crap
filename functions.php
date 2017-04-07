@@ -53,6 +53,29 @@ function get_contents($cachefilename,$url) {
 	return $content;
 }
 
+/**
+* 
+*/
+class Card 
+{
+
+	public $oda   = "";
+	public $name  = "";
+	public $email = "";
+	public $adr1  = "";
+	public $adr2  = "";
+	public $adr3  = "";
+	public $cp    = "";
+	public $ville = "";
+	public $tel1  = "";
+	public $tel2  = "";
+
+}
+
+function removedblspc($string) {
+	return preg_replace('/\s+/', ' ', $string);
+}
+
 	/**
 	 * getCard
 	 * 
@@ -63,12 +86,55 @@ function get_contents($cachefilename,$url) {
 	 * @return mixed résultat sous la forme d'un objet JSONDécodé ou false si erreur.
 	 */
 function getCard($content) {
+	preg_match_all("/_DATA = (.*?);/s", $content, $result);
+	if (isset($result[1][0])) {
+		$pvi = json_decode($result[1][0]);
+		$card = new Card();
+		if (isset($pvi->geoCoordonnees)) {
+			$geo = $pvi->geoCoordonnees[0];
+			if (isset($geo->lab)) {
+				$card->adr1	= trim($geo->lab);
+				$card->adr2	= trim($geo->adr1);
+				$card->adr3	= trim($geo->adr2);
+				$card->tel2	= isset($geo->tel)?trim($geo->tel):null;
+			} else if (isset($geo->default_address)) {
+				$adr	= explode("-", removedblspc($geo->default_address),2);
+				$card->adr1	= (isset($adr[1]))?trim($adr[0]):null;
+				$card->adr2	= (isset($adr[1]))?trim($adr[1]):trim($adr[0]);
+				$card->adr3	= $geo->default_city;
+				$card->tel2	= '';
+			} else {
+				$print_r($geo);
+				die('ERROR');
+			}
+
+		} else {
+			$card->adr1 = $card->adr2 = $card->adr3 = $card->tel2 = null;
+		}
+
+		$card->url   = trim($pvi->url);
+		$card->oda   = trim($pvi->pvi_id_oda);
+		$card->name  = utf8_decode(trim($pvi->corporate_name));
+		$card->email = utf8_decode(trim($pvi->email));
+		$card->tel1  = utf8_decode(trim($pvi->tel));
+		$card->cp    = utf8_decode(trim($pvi->cp));
+		$card->ville = utf8_decode(trim($pvi->loc));
+		$card->adr1  = utf8_decode($card->adr1);
+		$card->adr2  = utf8_decode($card->adr2);
+		$card->adr3  = utf8_decode($card->adr3);
+		$card->tel2  = utf8_decode($card->tel2);
+		echo '.';
+		return $card;
+	}
 	preg_match_all("/_COMPONENT_DATAS = (.*?);/s", $content, $result);
 	if (isset($result[1][0])) {
-		print_r($result);
-		print_r(json_decode($result[1][0]));
-		die;
+		$card = json_decode($result[1][0]);
+		foreach ($card as $key => $value) {
+		//	echo $key."\n";
+		}
+//		die('2');
 	}
+	return false;
 }
 
 function getCardOld($content) {
@@ -166,13 +232,13 @@ function extractData($contentUrl){
 					$content	= url_get_contents(trim($correctUrl),10);
 					$result		= getCard($content);
 					if (isset($result->url)) {
-						//echo "\tOK   : ".$line."\n";
+						echo "\tOK   : ".$line."\n";
 						file_put_contents($contentSite, serialize($result));
 						if (is_file($failSite)) {
 							unlink($failSite);
 						}
 					} else {
-						//echo "\tfail : ".$line."\n";
+						echo "\tfail : ".$line."\n";
 						file_put_contents($failSite, $content);
 					}
 

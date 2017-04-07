@@ -27,7 +27,7 @@ function removedblspc($string) {
 function insertData($fichier,$connection) {
 	$url = str_replace('www.pro.pagesjaunes', 'pro.pagesjaunes', $fichier);
 	$url = str_replace('_', '/', $url);
-	$data = unserialize(file_get_contents('/var/www/pj/cards/'.$fichier));
+	$data = unserialize(file_get_contents('/var/www/mespj/cards/'.$fichier));
 	/* il semblerait que certaines url étaient en IPV6,
 		on recharge les données dans ce cas. */	
 	if (!preg_match('/\./', $data->url)) {
@@ -37,47 +37,29 @@ function insertData($fichier,$connection) {
 		}
 	}
 	/*********************************************/
+			print_r($data);
+			die('37');
 
 	$insert = $connection->prepare('INSERT INTO
 		prospects (pvi_id,url,url2,nom,tel,email,cp,ville,adr1,adr2,adr3,tel2)
 		VALUES(
 			:pvi_id, :url,:url2,:nom, :tel, :email, :cp, :ville, :adr1, :adr2, :adr3, :tel2 )');
-	if (isset($data->geoCoordonnees)) {
-		$geo = $data->geoCoordonnees[0];
-		if (isset($geo->lab)) {
-			$adr1	= trim($geo->lab);
-			$adr2	= trim($geo->adr1);
-			$adr3	= trim($geo->adr2);
-			$tel2	= trim($geo->tel);
-		} else if (isset($geo->default_address)) {
-			$adr	= explode("-", removedblspc($geo->default_address),2);
-			$adr1	= (isset($adr[1]))?trim($adr[0]):null;
-			$adr2	= (isset($adr[1]))?trim($adr[1]):trim($adr[0]);
-			$adr3	= $geo->default_city;
-			$tel2	= '';
-		} else {
-			$print_r($geo);
-			die;
-		}
 
-	} else {
-		$adr1 = $adr2 = $adr3 = $tel2 = null;
-	}
 	try {
 		$success = $insert->execute(
 			array(
-				'pvi_id'	=> utf8_decode(trim($data->pvi_id_oda)),
+				'pvi_id'	=> $data->oda,
 				'url'		=> 'http://'.trim($url),
-				'url2'		=> trim($data->url),
-				'nom'		=> utf8_decode(trim($data->corporate_name)),
-				'tel'		=> utf8_decode(trim($data->tel)),
-				'email'		=> utf8_decode(trim($data->email)),
-				'cp'		=> utf8_decode(trim($data->cp)),
-				'ville'		=> utf8_decode(trim($data->loc)),
-				'adr1'		=> utf8_decode($adr1),
-				'adr2'		=> utf8_decode($adr2),
-				'adr3'		=> utf8_decode($adr3),
-				'tel2'		=> utf8_decode($tel2),
+				'url2'		=> $data->url,
+				'nom'		=> $data->name,
+				'tel'		=> $data->tel1,
+				'email'		=> $data->email,
+				'cp'		=> $data->cp,
+				'ville'		=> $data->ville,
+				'adr1'		=> $data->adr1,
+				'adr2'		=> $data->adr2,
+				'adr3'		=> $data->adr3,
+				'tel2'		=> $data->tel2,
 				)
 			);
 		if( !$success ) {
@@ -106,7 +88,7 @@ if($dossier = opendir('/var/www/pj/cards')) {
 	while(false !== ($fichier = readdir($dossier))) {
 		if ($fichier{0}!='.') {
 			insertData($fichier,$connection);
-			//die;
+			die('fin');
 		}
 	}	
 	closedir($dossier);
