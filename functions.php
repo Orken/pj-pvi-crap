@@ -104,7 +104,7 @@ function getCard($content) {
 				$card->adr3	= $geo->default_city;
 				$card->tel2	= '';
 			} else {
-				$print_r($geo);
+				print_r($geo);
 				die('ERROR');
 			}
 
@@ -126,14 +126,50 @@ function getCard($content) {
 		echo '.';
 		return $card;
 	}
-	preg_match_all("/_COMPONENT_DATAS = (.*?);/s", $content, $result);
+	preg_match_all("/_COMPONENT_DATAS = (.*?);/gs", $content, $result);
 	if (isset($result[1][0])) {
-		$card = json_decode($result[1][0]);
-		foreach ($card as $key => $value) {
-		//	echo $key."\n";
+		$pvi = json_decode($result[1][0]);
+		$card = new Card();
+		foreach ($pvi as $key => $value) {
+
+			if (isset($value->name) && ($value->name=='Share')) {
+				$card->ville = utf8_decode(trim($value->datas->loc));
+				$card->oda = trim($value->datas->pvi_id_oda);
+				$card->cp = utf8_decode(trim($value->datas->cp));
+				$card->tel1 = utf8_decode(trim($value->datas->tel));
+				$card->url = trim($value->datas->url);
+				$card->name  = utf8_decode(trim($value->datas->corporate_name));
+			}
+			if (isset($value->name) && ($value->name=='Map')) {
+				if (isset($value->datas->geoCoordonnees)) {
+					$geo = $value->datas->geoCoordonnees[0];
+					if (isset($geo->lab)) {
+						$card->adr1	= trim($geo->lab);
+						$card->adr2	= trim($geo->adr1);
+						$card->adr3	= trim($geo->adr2);
+						$card->tel2	= isset($geo->tel)?trim($geo->tel):null;
+					} else if (isset($geo->default_address)) {
+						$adr	= explode("-", removedblspc($geo->default_address),2);
+						$card->adr1	= (isset($adr[1]))?trim($adr[0]):null;
+						$card->adr2	= (isset($adr[1]))?trim($adr[1]):trim($adr[0]);
+						$card->adr3	= $geo->default_city;
+						$card->tel2	= '';
+					} else {
+						print_r($geo);
+						die('ERROR');
+					}
+
+				} else {
+					$card->adr1 = $card->adr2 = $card->adr3 = $card->tel2 = null;
+				}
+
+			}
 		}
-//		die('2');
+		echo "_";
+		return $card;
 	}
+	//print_r($content);
+	//die('EROROR');
 	return false;
 }
 
@@ -238,7 +274,9 @@ function extractData($contentUrl){
 							unlink($failSite);
 						}
 					} else {
+						print_r($result);
 						echo "\tfail : ".$line."\n";
+						die;
 						file_put_contents($failSite, $content);
 					}
 
