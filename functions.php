@@ -17,6 +17,7 @@ function url_get_contents($adresse, $timeout = 10){
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 	curl_setopt($ch, CURLOPT_REFERER, "http://pro.pagesjaunes.fr");
 	curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux i686; rv:18.0) Gecko/20130330 Thunderbird/17.0.5");
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 	//curl_setopt($ch, CURLOPT_HEADER, array('HTTP_X_FORWARDED_FOR: 1.2.3.4'));
 	//curl_setopt($ch, CURLOPT_PROXY, "54.251.150.200:80");
 	curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
@@ -85,7 +86,35 @@ function removedblspc($string) {
 	 *
 	 * @return mixed résultat sous la forme d'un objet JSONDécodé ou false si erreur.
 	 */
-function getCard($content) {
+function getCard($content, $url="") {
+	if (empty($content)) {
+		die($url);
+		return false;
+	}
+	preg_match_all("/<script type='application\/ld\+json'>(.*?)<\/script>/s", $content, $result);
+	if (isset($result[1][0])) {
+		foreach ($result[1] as $value) {
+			$pvi = json_decode($value);
+			$card = new Card();
+			if (isset($pvi->telephone)) {
+				$pviurl = isset($pvi->url)?trim($pvi->url):$url;
+				$card->url   = $pviurl;
+				$card->oda   = utf8_decode(trim($pvi->name));
+				$card->name  = utf8_decode(trim($pvi->name));
+				/* $card->email = utf8_decode(trim($pvi->email));*/
+				$card->tel1  = utf8_decode(trim($pvi->telephone));
+				$card->cp    = utf8_decode(trim($pvi->address->postalCode));
+				$card->ville = utf8_decode(trim($pvi->address->addressLocality));
+				$card->adr1  = utf8_decode($pvi->name);
+				$card->adr2  = utf8_decode($pvi->address->streetAddress);
+				$card->adr3  = $card->cp . " " . $card->ville;
+				$card->tel2  = null;
+				print_r($pvi);
+				print_r($card);die;
+			}
+		}
+		print_r($result);die;
+	}
 	preg_match_all("/_DATA = (.*?);/s", $content, $result);
 	if (isset($result[1][0])) {
 		$pvi = json_decode($result[1][0]);
@@ -126,7 +155,7 @@ function getCard($content) {
 		echo '.';
 		return $card;
 	}
-	preg_match_all("/_COMPONENT_DATAS = (.*?);/gs", $content, $result);
+	preg_match_all("/_COMPONENT_DATAS = (.*?);/s", $content, $result);
 	if (isset($result[1][0])) {
 		$pvi = json_decode($result[1][0]);
 		$card = new Card();
@@ -168,8 +197,10 @@ function getCard($content) {
 		echo "_";
 		return $card;
 	}
-	//print_r($content);
-	//die('EROROR');
+	file_put_contents('filename', $content);
+	file_put_contents('result', json_encode($result));
+	print_r($content);
+	die('EROROR');
 	return false;
 }
 
@@ -266,7 +297,7 @@ function extractData($contentUrl){
 					}
 					$correctUrl = str_replace("www.pro.pagesjaunes", "pro.pagesjaunes", $line);
 					$content	= url_get_contents(trim($correctUrl),10);
-					$result		= getCard($content);
+					$result		= getCard($content, $correctUrl);
 					if (isset($result->url)) {
 						echo "\tOK   : ".$line."\n";
 						file_put_contents($contentSite, serialize($result));
