@@ -11,7 +11,7 @@ header("Content-Type: plain/text");
 $count = 0;
 for ($i=1; $i<672 ; $i++) { 
 	set_time_limit(0);
-	if ($count>15) {
+	if ($count>1500) {
 		break;
 	}
 	$contentFile = '/var/www/mespj/content/' . $i . '.txt';

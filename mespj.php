@@ -59,7 +59,6 @@ foreach ($pjs as $pj) {
 	$url = 'http://mesannuaires.pagesjaunes.fr/'.$pj;
 	$cachefilename = $cachepath.preg_replace('/[^a-zA-Z0-9\.]/', '.', $pj);
 	$content = get_contents($cachefilename,$url);
-print_r($content);print_r($url);die;
 	
 	if (!$annuaire=getAnnuaire($content)) {
 		echo "Etape 2 : Récupération de l'annuaire impossible.";

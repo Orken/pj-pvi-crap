@@ -88,7 +88,6 @@ function removedblspc($string) {
 	 */
 function getCard($content, $url="") {
 	if (empty($content)) {
-		die($url);
 		return false;
 	}
 	preg_match_all("/<script type='application\/ld\+json'>(.*?)<\/script>/s", $content, $result);
@@ -109,11 +108,11 @@ function getCard($content, $url="") {
 				$card->adr2  = utf8_decode($pvi->address->streetAddress);
 				$card->adr3  = $card->cp . " " . $card->ville;
 				$card->tel2  = null;
-				print_r($pvi);
-				print_r($card);die;
+				/*print_r($pvi);
+				print_r($card);die;*/
 			}
 		}
-		print_r($result);die;
+		//print_r($result);die;
 	}
 	preg_match_all("/_DATA = (.*?);/s", $content, $result);
 	if (isset($result[1][0])) {
@@ -133,8 +132,8 @@ function getCard($content, $url="") {
 				$card->adr3	= $geo->default_city;
 				$card->tel2	= '';
 			} else {
-				print_r($geo);
-				die('ERROR');
+				//print_r($geo);
+				//die('ERROR');
 			}
 
 		} else {
@@ -184,8 +183,8 @@ function getCard($content, $url="") {
 						$card->adr3	= $geo->default_city;
 						$card->tel2	= '';
 					} else {
-						print_r($geo);
-						die('ERROR');
+						/*print_r($geo);
+						die('ERROR');*/
 					}
 
 				} else {
@@ -199,8 +198,8 @@ function getCard($content, $url="") {
 	}
 	file_put_contents('filename', $content);
 	file_put_contents('result', json_encode($result));
-	print_r($content);
-	die('EROROR');
+	/*print_r($content);
+	die('EROROR');*/
 	return false;
 }
 
@@ -307,7 +306,7 @@ function extractData($contentUrl){
 					} else {
 						print_r($result);
 						echo "\tfail : ".$line."\n";
-						die;
+						//die;
 						file_put_contents($failSite, $content);
 					}
 

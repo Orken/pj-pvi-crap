@@ -10,9 +10,6 @@ include('functions.php');
      *
      * @return string Chaine nettoyée.
      */
-function removedblspc($string) {
-	return preg_replace('/\s+/', ' ', $string);
-}
 
     /**
      * insertData
@@ -37,11 +34,9 @@ function insertData($fichier,$connection) {
 		}
 	}
 	/*********************************************/
-			print_r($data);
-			die('37');
 
 	$insert = $connection->prepare('INSERT INTO
-		prospects (pvi_id,url,url2,nom,tel,email,cp,ville,adr1,adr2,adr3,tel2)
+		pvi2017 (pvi_id,url,url2,nom,tel,email,cp,ville,adr1,adr2,adr3,tel2)
 		VALUES(
 			:pvi_id, :url,:url2,:nom, :tel, :email, :cp, :ville, :adr1, :adr2, :adr3, :tel2 )');
 
@@ -63,9 +58,13 @@ function insertData($fichier,$connection) {
 				)
 			);
 		if( !$success ) {
-			echo "Erreur\n";
+			echo "Erreur : \n";
+			print_r($connection->errorCode());
 			print_r($data);
+			die;
 			echo "\n\n\n";
+		} else {
+			echo "OK\n";
 		}
 	} catch( Exception $e ){
 		echo 'Erreur de requète : ', $e->getMessage();
@@ -74,9 +73,9 @@ function insertData($fichier,$connection) {
 
 
 try{
-	$dns = 'mysql:host=localhost;dbname=';
-	$utilisateur = '';
-	$motDePasse = '';
+	$dns = 'mysql:host=localhost;dbname=pvi';
+	$utilisateur = 'root';
+	$motDePasse = 'root';
 	$options = array(PDO::MYSQL_ATTR_INIT_COMMAND=> "SET NAMES utf8");
 	$connection = new PDO( $dns, $utilisateur, $motDePasse );
 } catch (Exception $e) {
@@ -84,11 +83,11 @@ try{
 	die();
 }
 
-if($dossier = opendir('/var/www/pj/cards')) {
+if($dossier = opendir('/var/www/mespj/cards')) {
 	while(false !== ($fichier = readdir($dossier))) {
 		if ($fichier{0}!='.') {
 			insertData($fichier,$connection);
-			die('fin');
+			//die('fin');
 		}
 	}	
 	closedir($dossier);
